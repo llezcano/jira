@@ -15,39 +15,18 @@
  */
 package tesis.jira.client;
 
-
 import com.atlassian.jira.rest.client.JiraRestClient;
 import com.atlassian.jira.rest.client.domain.BasicIssue;
 import com.atlassian.jira.rest.client.domain.BasicProject;
-import com.atlassian.jira.rest.client.domain.BasicWatchers;
-import com.atlassian.jira.rest.client.domain.Comment;
-import com.atlassian.jira.rest.client.domain.Issue;
 import com.atlassian.jira.rest.client.domain.SearchResult;
-import com.atlassian.jira.rest.client.domain.Transition;
-import com.atlassian.jira.rest.client.domain.input.ComplexIssueInputFieldValue;
-import com.atlassian.jira.rest.client.domain.input.FieldInput;
-import com.atlassian.jira.rest.client.domain.input.TransitionInput;
 import com.atlassian.jira.rest.client.internal.ServerVersionConstants;
 import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
-import com.atlassian.jira.rest.client.domain.User;
-import com.atlassian.jira.rest.client.JiraRestClient;
-import com.atlassian.jira.rest.client.domain.User;
-
-
 import com.google.common.collect.Lists;
-
 import org.codehaus.jettison.json.JSONException;
-
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-
-
-
 
 
 /**
@@ -65,7 +44,7 @@ public class App {
 
 		final AsynchronousJiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
 		final JiraRestClient restClient = factory.createWithBasicHttpAuthentication(jiraServerUri, "grodriguez", "654321");
-		try {
+		
 			final int buildNumber = restClient.getMetadataClient().getServerInfo().claim().getBuildNumber();
 
 			// first let's get and print all visible projects (only jira4.3+)
@@ -84,26 +63,26 @@ public class App {
 					println(issue.getKey());
 				}
 			}
-
+			
+			
+			// Geteo un determinado Issue
+			/*
 			final Issue issue = restClient.getIssueClient().getIssue("TST-7").claim();
-
 			println(issue);
-
+			
 			// now let's watch it
 			final BasicWatchers watchers = issue.getWatchers();
 			if (watchers != null) {
 				restClient.getIssueClient().watch(watchers.getSelf()).claim();
 			}
-			
+			*/
 			
 			// print users 
-			if (buildNumber >= ServerVersionConstants.BN_JIRA_5) {
+		//	if (buildNumber >= ServerVersionConstants.BN_JIRA_5) {
 			//	JiraClientRest users ;
-			}			
+		//	}			
 
-		} finally {
-			((PrintStream) restClient).close();
-		}
+	
 	}
 
 	private static void println(Object o) {
@@ -122,15 +101,6 @@ public class App {
 		if (!args.isEmpty()) {
 			jiraServerUri = new URI(args.get(0));
 		}
-	}
-
-	private static Transition getTransitionByName(Iterable<Transition> transitions, String transitionName) {
-		for (Transition transition : transitions) {
-			if (transition.getName().equals(transitionName)) {
-				return transition;
-			}
-		}
-		return null;
 	}
 
 }
