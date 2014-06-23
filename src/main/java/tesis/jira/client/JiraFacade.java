@@ -2,9 +2,12 @@ package tesis.jira.client;
 
 import com.atlassian.jira.rest.client.JiraRestClient;
 import com.atlassian.jira.rest.client.domain.BasicIssue;
+import com.atlassian.jira.rest.client.domain.Issue;
 import com.atlassian.jira.rest.client.domain.SearchResult;
 import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
+
 import org.codehaus.jettison.json.JSONException;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -48,16 +51,26 @@ public class JiraFacade {
 	 * en Java Query Language (JQL).
 	 * 
 	 * @param query	Consulta a realizar en JQL 
-	 * @return		Lista de Issues que satisfacen la consulta
+	 * @return		Lista de Basic Issues que satisfacen la consulta, un basic Issue tiene poca informacion del 
+	 * 				issue en si, pero tiene la Key.
+	 * 
 	 */
 	public List<BasicIssue> issueQuery(String query) {
 		List<BasicIssue> result = new ArrayList<BasicIssue>() ;
 		final SearchResult searchResult = restClient.getSearchClient().searchJql(query).claim();
 		for (BasicIssue issue : searchResult.getIssues()) {
-			// System.out.println(issue.getKey());
 			result.add(issue) ;
 		}
 		return result;
+	}
+	
+	/**
+	 * @param issueKey	clave del issue que se desea obtener
+	 * @return			Un issue con toda la informacion asociada a este.
+	 * 
+	 */
+	public Issue getIssue(String issueKey) {
+		return restClient.getIssueClient().getIssue(issueKey).claim();
 	}
 	
 	

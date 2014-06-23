@@ -18,15 +18,30 @@ package tesis.jira.client;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
 
 import org.codehaus.jettison.json.JSONException;
+
+import com.atlassian.jira.rest.client.domain.BasicIssue;
 
 public class App {
 	public static void main(String[] args) throws URISyntaxException, JSONException, IOException  {
 		
 		JiraFacade jira = new JiraFacade("http://ing.exa.unicen.edu.ar:8086/atlassian-jira-6.0/", "grodriguez", "654321");
-		jira.issueQuery("assignee = clomagno") ;
-	
+		
+		// TODO probar varios tipos de consultas y analizar la estructura de los resultados
+		// Para probar las consultas JQL ingresar aqui http://ing.exa.unicen.edu.ar:8086/atlassian-jira-6.0/issues/ 
+		// y hacer click "Busqueda Avanzada"
+		
+		List<BasicIssue> queryResult = jira.issueQuery("assignee = clomagno") ;
+		
+		for (BasicIssue issue : queryResult ) {
+		//	jira.getIssue(issue.getKey()) ;
+			System.out.println(jira.getIssue(issue.getKey())) ;
+			break ;
+		}
+		
+		
 	}
 
 }
