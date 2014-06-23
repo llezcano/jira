@@ -13,94 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package tesis.jira.client;
 
-import com.atlassian.jira.rest.client.JiraRestClient;
-import com.atlassian.jira.rest.client.domain.BasicIssue;
-import com.atlassian.jira.rest.client.domain.BasicProject;
-import com.atlassian.jira.rest.client.domain.SearchResult;
-import com.atlassian.jira.rest.client.internal.ServerVersionConstants;
-import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
-import com.google.common.collect.Lists;
-import org.codehaus.jettison.json.JSONException;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 
+import org.codehaus.jettison.json.JSONException;
 
-/**
- * A sample code how to use JRJC library
- *
- * @since v0.1
- */
 public class App {
-
-	private static URI jiraServerUri = URI.create("http://ing.exa.unicen.edu.ar:8086/atlassian-jira-6.0/");
-	private static boolean quiet = false;
-
-	public static void main(String[] args) throws URISyntaxException, JSONException, IOException {
-		parseArgs(args);
-
-		final AsynchronousJiraRestClientFactory factory = new AsynchronousJiraRestClientFactory();
-		final JiraRestClient restClient = factory.createWithBasicHttpAuthentication(jiraServerUri, "grodriguez", "654321");
+	public static void main(String[] args) throws URISyntaxException, JSONException, IOException  {
 		
-			final int buildNumber = restClient.getMetadataClient().getServerInfo().claim().getBuildNumber();
-
-			// first let's get and print all visible projects (only jira4.3+)
-			if (buildNumber >= ServerVersionConstants.BN_JIRA_5) {
-				final Iterable<BasicProject> allProjects = restClient.getProjectClient().getAllProjects().claim();
-				for (BasicProject project : allProjects) {
-					println(project);
-				}
-			}
-			
-			System.out.println("Issue key");
-			// let's now print all issues matching a JQL string (here: all assigned issues)
-			if (buildNumber >= ServerVersionConstants.BN_JIRA_5) {
-				final SearchResult searchResult = restClient.getSearchClient().searchJql("assignee is not EMPTY").claim();
-				for (BasicIssue issue : searchResult.getIssues()) {
-					println(issue.getKey());
-				}
-			}
-			
-			
-			// Geteo un determinado Issue
-			/*
-			final Issue issue = restClient.getIssueClient().getIssue("TST-7").claim();
-			println(issue);
-			
-			// now let's watch it
-			final BasicWatchers watchers = issue.getWatchers();
-			if (watchers != null) {
-				restClient.getIssueClient().watch(watchers.getSelf()).claim();
-			}
-			*/
-			
-			// print users 
-		//	if (buildNumber >= ServerVersionConstants.BN_JIRA_5) {
-			//	JiraClientRest users ;
-		//	}			
-
+		JiraFacade jira = new JiraFacade("http://ing.exa.unicen.edu.ar:8086/atlassian-jira-6.0/", "grodriguez", "654321");
+		jira.issueQuery("assignee = clomagno") ;
 	
-	}
-
-	private static void println(Object o) {
-		if (!quiet) {
-			System.out.println(o);
-		}
-	}
-
-	private static void parseArgs(String[] argsArray) throws URISyntaxException {
-		final List<String> args = Lists.newArrayList(argsArray);
-		if (args.contains("-q")) {
-			quiet = true;
-			args.remove(args.indexOf("-q"));
-		}
-
-		if (!args.isEmpty()) {
-			jiraServerUri = new URI(args.get(0));
-		}
 	}
 
 }
