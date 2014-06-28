@@ -27,13 +27,13 @@ import com.atlassian.jira.rest.client.domain.BasicIssue;
 public class App {
 	public static void main(String[] args) throws URISyntaxException, JSONException, IOException  {
 		
-		JiraFacade jira = new JiraFacade("http://ing.exa.unicen.edu.ar:8086/atlassian-jira-6.0/", "grodriguez", "654321");
+		JiraFacade jira = new JiraFacade("http://", "hu", "dwqdwq");
 		
 		// TODO probar varios tipos de consultas y analizar la estructura de los resultados
 		// Para probar las consultas JQL ingresar aqui http://ing.exa.unicen.edu.ar:8086/atlassian-jira-6.0/issues/ 
 		// y hacer click "Busqueda Avanzada"
 		
-		List<BasicIssue> queryResult = jira.issueQuery("assignee = clomagno") ;
+		List<BasicIssue> queryResult = jira.issueQuery("assignee = asdasd") ;
 		
 		for (BasicIssue issue : queryResult ) {
 		//	jira.getIssue(issue.getKey()) ;
