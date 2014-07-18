@@ -45,14 +45,11 @@ import tesis.jsonfilter.JSONFilter;
 
 public class App {
 	public static void main(String[] args) throws URISyntaxException, JSONException, IOException  {
-<<<<<<< HEAD
+
 		JiraFacade jira = new JiraFacade("http://ing.exa.unicen.edu.ar:8086/atlassian-jira-6.0/", "grodriguez", "654321");
-=======
-		
-		JiraFacade jira = new JiraFacade("http://", "hu", "dwqdwq");
-		
+	
 		// TODO probar varios tipos de consultas y analizar la estructura de los resultados
->>>>>>> 819dc0a8d8f720c75828ef645c5dedac08c15094
+
 		// Para probar las consultas JQL ingresar aqui http://ing.exa.unicen.edu.ar:8086/atlassian-jira-6.0/issues/ 
 		// y hacer click "Busqueda Avanzada"
 		// Parseo y envio los issues (tareas)
@@ -87,10 +84,8 @@ public class App {
 		
 		// Parseo y envio los users
 		
-<<<<<<< HEAD
-=======
 		List<BasicIssue> queryResult = jira.issueQuery("assignee = asdasd") ;
->>>>>>> 819dc0a8d8f720c75828ef645c5dedac08c15094
+
 		
 		max = 49;
 		min = 0 ;
