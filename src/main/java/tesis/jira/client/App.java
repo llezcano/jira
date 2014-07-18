@@ -62,34 +62,13 @@ public class App {
 		Integer max = 49, min = 0 ;
 		Integer gap = 50 ;
 		boolean hasMore = true ;
-		String issueJsonSchema = readFile( "issueSchema" , Charset.defaultCharset() ) ;
-		JsonNode issueSchema = m.readTree(issueJsonSchema) ;
-
 		
-		while (hasMore) {
-			ArrayNode issues = (ArrayNode) m.readTree(jira.getIssues("", min, max )).path("issues") ;
-			it = issues.getElements() ;
-			
-			JsonNode issue = null ;
-			hasMore = it.hasNext() ;
-			while (it.hasNext()) {
-				issue = it.next() ;
-				//System.out.println( jf.filter(issue, issueSchema) ); //estos issues estan listos para ser enviados al ES
-				 send( "jira", "issue", jf.filter(issue, issueSchema).toString()) ;
-			
-			}
-			min = max ;
-			max += gap ;					
-		}
+		
 		
 		// Parseo y envio los users
-		
-		List<BasicIssue> queryResult = jira.issueQuery("assignee = asdasd") ;
-
-		
-		max = 49;
-		min = 0 ;
-		hasMore = true ;
+	//	max = 49;
+	//	min = 0 ;
+	//	hasMore = true ;
 		String userJsonSchema = readFile( "userSchema" , Charset.defaultCharset() ) ;
 		JsonNode userSchema = m.readTree(userJsonSchema) ;
 		while (hasMore) {
@@ -99,13 +78,43 @@ public class App {
 			hasMore = it.hasNext() ;
 			while (it.hasNext()) {
 				user = it.next() ;
-				//System.out.println( jf.filter(user, userSchema) ); //estos usuarios estan listos para ser enviados al ES
-				send( "jira", "user", jf.filter(user, userSchema).toString()) ;
+				JsonNode json =  jf.filter(user, userSchema) ; 
+				System.out.println( json ); //estos usuarios estan listos para ser enviados al ES
+				send( "jira", "user", json.get("name").getTextValue(), json.toString()) ;
+				
+
 			}
 			min = max ;
 			max += gap ;	
 		}
 		
+		
+		
+		
+		
+		String issueJsonSchema = readFile( "issueSchema" , Charset.defaultCharset() ) ;
+		JsonNode issueSchema = m.readTree(issueJsonSchema) ;
+		max = 49;
+		min = 0 ;
+		hasMore = true ;
+		while (hasMore) {
+			ArrayNode issues = (ArrayNode) m.readTree(jira.getIssues("", min, max )).path("issues") ;
+			it = issues.getElements() ;
+			
+			JsonNode issue = null ;
+			hasMore = it.hasNext() ;
+			while (it.hasNext()) {
+				issue = it.next() ;
+				JsonNode json =  jf.filter(issue, issueSchema) ;
+				System.out.println( json.get("key").getTextValue()  ); //estos issues estan listos para ser enviados al ES
+				send( "jira", "issue", json.get("key").getTextValue(), json.toString()) ;
+			
+			}
+			min = max ;
+			max += gap ;					
+		}
+		
+
 		
 		/*
 		//aca ya tengo los usuarios por separados, listos para enviar al ElasticSearch
@@ -128,7 +137,7 @@ public class App {
 	
 	
 	// TODO meterlo en alguna clase sacarle el hardcodeado
-	static void send(String app, String dtype, String json) throws URISyntaxException, MalformedURLException, IOException {
+	static void send(String app, String dtype, String key, String json) throws URISyntaxException, MalformedURLException, IOException {
 		URI uri = new URIBuilder()
 	    .setScheme("http")
 	    .setHost("localhost")
@@ -136,6 +145,7 @@ public class App {
 	    .setPath("/sender/SenderService")
 	    .addParameter("app", app)
 	    .addParameter("data", dtype)
+	    .addParameter("key", key)
 	    .build();
 		
 		
