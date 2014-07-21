@@ -1,53 +1,100 @@
 package tesis.jira.client;
 
 
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 
-import com.atlassian.jira.rest.client.JiraRestClient;
-import com.atlassian.jira.rest.client.domain.BasicIssue;
-import com.atlassian.jira.rest.client.domain.Issue;
-import com.atlassian.jira.rest.client.domain.SearchResult;
-import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
-
-import org.apache.http.client.utils.URIBuilder;
 import org.codehaus.jettison.json.JSONException;
 
-import sun.misc.BASE64Encoder;
-
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
+
+import javax.ws.rs.core.MultivaluedMap;
 
 
-@SuppressWarnings("restriction")
 public class JiraFacade {
+
+	private String URL;
+	private HTTPBasicAuthFilter authorization ;
 	
-	private AsynchronousJiraRestClientFactory factory ;
-	private JiraRestClient restClient ;
-	private String _url,  _user, _pass ;
+	private static String API = "rest/api/2/" ;
+	
+	//resources from Jira API
+	private static final String RESOURCE_GROUP = "group" ;
+	private static final String RESOURCE_SEARCH = "search" ;
+	
+	//parameters for each resource
+	// group
+	private static final String RGROUP_GROUPNAME = "groupname" ;
+	private static final String RGROUP_EXPAND = "expand" ;
+	
+	// search
+	private static final String RSEARCH_QUERY = "jql" ;
+	private static final String RSEARCH_START = "startAt"; 
+	private static final String RSEARCH_MAX = "maxResults";
 	
 	/**
-	 * Constructor con autentificacion para JIRA REST Java Cliente (JRJA).
+	 * Constructor con autentificacion para cliente REST de JIRA
 	 * 
 	 * @param URL	URL donde se ubica el Servidor JIRA con el cual se desea comunicar
 	 * @param user	Nombre de usuario el cual realizara las consultas
 	 * @param pass 	Contraseña del usuario
 	 */
-	public JiraFacade(String URL, String user, String pass) throws URISyntaxException, JSONException, IOException {
-		factory = new AsynchronousJiraRestClientFactory();
-		_user = user ;
-		_pass = pass ;
-		_url = URL ;
-		restClient = factory.createWithBasicHttpAuthentication(URI.create(URL) , user, pass);
+	public JiraFacade(String url, String user, String pass) throws URISyntaxException, JSONException, IOException {
+		URL = url ;
+		authorization = new HTTPBasicAuthFilter(user, pass) ;
+	}
+
+	
+	/**
+	 * Metodo HTTP GET para acceder a la API de JIRA.
+	 * 
+	 * @param resource	Recurso de la API al cual se desea hacer el GET.
+	 * @param params	Parametros con los cuales se realizara el GET.
+	 * @return			JSON como respuesta el GET.
+	 */
+	private String get( String resource, MultivaluedMap<String, String> params ) {
+		try {
+			Client client = Client.create();
+			
+			WebResource webResource = client.resource(URL + API + resource) ;
+			webResource.addFilter(authorization);
+			webResource.setProperty("Content-Type", "application/json;charset=UTF-8");
+			
+			ClientResponse response = webResource
+	                .queryParams(params)
+					.accept("application/json")
+					.get(ClientResponse.class) ;
+					 
+			if (response.getStatus() != 200) {
+				throw new RuntimeException("Failed : HTTP error code : "
+						+ response.getStatus());
+			}
+			String output = response.getEntity(String.class);
+			return output ;
+				
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return null ;
+	
 	}
 	
 	
+	/**
+	 * @param issueKey	clave del issue que se desea obtener
+	 * @return			Un json correspondiente al issue con toda la informacion asociada a este.
+	 * 
+	 */
+	public String getIssue(String issueKey) {
+		return null ;
+	}
+	
+
 	/**
 	 * Consulta las Issues que cumplen con un determinado criterio, dicho criterio esta definido
 	 * en Java Query Language (JQL).
@@ -57,146 +104,41 @@ public class JiraFacade {
 	 * 				issue en si, pero tiene la Key.
 	 * 
 	 */
-	
-	
-	public List<BasicIssue> issueQuery(String query) {
-		List<BasicIssue> result = new ArrayList<BasicIssue>() ;
-		final SearchResult searchResult = restClient.getSearchClient().searchJql(query).claim();
-		for (BasicIssue issue : searchResult.getIssues()) {
-			result.add(issue) ;
-		}
-		return result;
+	public String getIssues( String query, Integer min, Integer max ) {
+		MultivaluedMap<String, String> params = new MultivaluedMapImpl(); 
+		params.add(RSEARCH_QUERY, query ); 
+		params.add(RSEARCH_START, min.toString()) ;
+		params.add(RSEARCH_MAX, max.toString()) ;
+		return get(RESOURCE_SEARCH, params) ;
 	}
-	
+
+
 	/**
-	 * @param issueKey	clave del issue que se desea obtener
-	 * @return			Un issue con toda la informacion asociada a este.
-	 * 
+	 * Retorna todos los issues de JIRA 
+	 * @param min	
+	 * @param max	
+	 * @return
 	 */
-	public Issue getIssue(String issueKey) {
-		return restClient.getIssueClient().getIssue(issueKey).claim();
-	}
-	
-	public String getUsersByGroup(String group, Integer min, Integer max) {
-	    String result = "" ;
-		try {
-		//	uri = new URI( "http://ing.exa.unicen.edu.ar:8086/atlassian-jira-6.0/rest/api/2/group"+ "?groupname=jira-developers" );
-			
-			//TODO  aca se tendria que usar la variable _url y que no quede harcodeado
-			URI uri = new URIBuilder()
-		    .setScheme("http")
-		    .setHost("ing.exa.unicen.edu.ar")
-		    .setPort(8086)
-		    .setPath("/atlassian-jira-6.0/rest/api/2/group")
-		    .addParameter("groupname", group)
-		    .addParameter("expand", "users[" + min + ":" + max + "]")
-		    .build();
-			
-			HttpURLConnection conn = (HttpURLConnection) uri.toURL().openConnection();
-			conn.setDoOutput(true);
-			conn.setRequestMethod("GET");		
-			conn.setRequestProperty("charset", "utf-8");
-
-		    String userpassword = _user + ":" + _pass;
-		    BASE64Encoder enc = new BASE64Encoder() ;
-		    String encodedAuthorization = enc.encode(userpassword.getBytes()) ;
-		    conn.setRequestProperty("Authorization", "Basic "+ encodedAuthorization);
-		    
-		    InputStream response = conn.getInputStream();
-		    /* printing inputStream*/ 
-		    
-		    BufferedReader in = new BufferedReader(new InputStreamReader(response));
-
-		    String inputLine;
-		    try {
-		    	while ((inputLine = in.readLine()) != null)
-		    	    result += inputLine ;
-		    	in.close();
-		    } catch (IOException e1) {
-		    	// TODO Auto-generated catch block
-		    	e1.printStackTrace();
-		    }
-		    
-		    System.err.println(conn.getResponseCode());
-		
-		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		//System.out.println(uri.toString());
-		catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return result ;
-		
+	public String getIssues(Integer min, Integer max) {
+		return getIssues("", min, max) ;
 	}
 	
 	
+	public String getUser(String userKey) {
+		//TODO
+		return null ;
+	}
 	
-	public String getIssues( String query , Integer min, Integer max) {
-		
-		//http://ing.exa.unicen.edu.ar:8086/atlassian-jira-6.0/rest/api/2/search?startAt=2&maxResults=3
-	    String result = "" ;
-		try {
-			URI uri = new URIBuilder()
-		    .setScheme("http")
-		    .setHost("ing.exa.unicen.edu.ar")
-		    .setPort(8086)
-		    .setPath("/atlassian-jira-6.0/rest/api/2/search")
-		  //  .addParameter("jql", query)
-		    .addParameter("startAt", min.toString())
-		    .addParameter("maxResults", max.toString())// permite hasta 1000 como maximo
-		    .build();
-			
-			HttpURLConnection conn = (HttpURLConnection) uri.toURL().openConnection();
-			conn.setDoOutput(true);
-			conn.setRequestMethod("GET");		
-			conn.setRequestProperty("charset", "utf-8");
-
-		    String userpassword = _user + ":" + _pass;
-		    BASE64Encoder enc = new BASE64Encoder() ;
-		    String encodedAuthorization = enc.encode(userpassword.getBytes()) ;
-		    conn.setRequestProperty("Authorization", "Basic "+ encodedAuthorization);
-		    
-		    InputStream response = conn.getInputStream();
-		    /* printing inputStream*/ 
-		    
-		    BufferedReader in = new BufferedReader(new InputStreamReader(response));
-
-		    String inputLine;
-		    try {
-		    	while ((inputLine = in.readLine()) != null)
-		    	    result += inputLine ;
-		    	in.close();
-		    } catch (IOException e1) {
-		    	// TODO Auto-generated catch block
-		    	e1.printStackTrace();
-		    }
-		    
-		    System.err.println(conn.getResponseCode());
-		
-		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		//System.out.println(uri.toString());
-		catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		
-		return result;
+	
+	public String getUsers( String group, Integer min, Integer max ) {
+		MultivaluedMap<String, String> params = new MultivaluedMapImpl(); 
+		params.add(RGROUP_GROUPNAME, group );
+		params.add(RGROUP_EXPAND, "users[" + min.toString() + ":" + max.toString() + "]") ;
+		return get(RESOURCE_GROUP, params) ;
 	}
 
-
-
-
+	
+	
+	
+	
 }
